@@ -3,10 +3,13 @@
 Created on Wed May 17 13:06:53 2017
 解析龙岩市房地产信息网的楼盘信息 http://www.fjlyfdc.com.cn
 @author: new
+# python3.5测试通过。
 """
 
 import urllib.request as urllib2
 from bs4 import BeautifulSoup
+import csv
+
 
 
 def SaveFile(content, filename):
@@ -72,14 +75,14 @@ def spyder_list():
 
             html = urllib2.urlopen(url).read().decode("utf-8")
             html = BeautifulSoup(str(html), "lxml")
-            #print(html)
+            # print(html)
 
             table = html.find(name='table', class_="table tablestyles text-center")
             for tr in table.find_all(name='tr', limit=30, recursive=False):
                 p = {}
                 td = tr.find_all(name='td', limit=4, recursive=False)
                 print('---------------')
-                if (td):
+                if td:
                     # 项目基本信息
                     p["开发企业"] = td[0].get_text()
                     p["项目名称"] = td[1].get_text().strip()
