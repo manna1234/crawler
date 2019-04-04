@@ -2,6 +2,7 @@
 """
 Created on Wed May 17 13:06:53 2017
 解析龙岩市房地产信息网的楼盘信息 http://www.fjlyfdc.com.cn
+--该网址已经失效，需要迁移http://222.78.94.14/ZL/House/ListProject 楼盘项目大全
 @author: new
 # python3.5测试通过。
 """
@@ -70,12 +71,12 @@ def spyder_list():
     with open('a.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         for page in range(1, 30):
-            url = 'http://www.fjlyfdc.com.cn/House/ListProject.cshtml?pagenumber={}&pagesize=15'.format(str(page))
+            url = 'http://222.78.94.14/ZL/House/ListProject?pagenumber={}&pagesize=15'.format(str(page))
             print(url)
 
             html = urllib2.urlopen(url).read().decode("utf-8")
             html = BeautifulSoup(str(html), "lxml")
-            # print(html)
+            print(html)
 
             table = html.find(name='table', class_="table tablestyles text-center")
             for tr in table.find_all(name='tr', limit=30, recursive=False):
