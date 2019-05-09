@@ -8,22 +8,21 @@ Created on Wed May 17 13:06:53 2017
 # python3.5 测试通过。
 """
 
-import urllib.request as urllib2
+import requests
 from bs4 import BeautifulSoup
 import csv
 
 
 def SaveFile(content, filename):
-    f = open(filename, "a")
-    f.write(str(content) + "\n")
-    f.close()
+    with open(filename, "a") as f:
+        f.write(str(content) + "\n")
 
 
 # 解析内容页
 def spyder_content(url, p):
     print(url)
-    html = urllib2.urlopen(url).read().decode("utf-8")
-    html = BeautifulSoup(str(html), "lxml")
+    html = getHtmlText(url)
+    html = BeautifulSoup(html, "lxml")
 
     table = html.find(name='table', class_="tablestyles")
 
@@ -68,45 +67,53 @@ def spyder_content(url, p):
 
 
 # 解析列表页
-def spyder_list(website, pagenumber):
-    with open('a.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        for page in range(1, pagenumber):
-            url = website + '/ZL/House/ListProject?pagenumber={}&pagesize=15'.format(str(page))
-            print(url)
+def spyder_list(text, website):
+    html = BeautifulSoup(text, "lxml")
 
-            html = urllib2.urlopen(url).read().decode("utf-8")
-            html = BeautifulSoup(str(html), "lxml")
-            # print(html)
+    table = html.find(name='table', class_="tablestyles text-center")
+    print(table)
+
+    for tr in table.find_all(name='tr', limit=30, recursive=False):
+        p = {}
+        td = tr.find_all(name='td', limit=4, recursive=False)
+        print('---------------')
+        if td:
+            # 项目基本信息
+            p["开发企业"] = td[0].get_text()
+            p["项目名称"] = td[1].get_text().strip()
+            p["项目坐落"] = td[2].get_text()
+            p["项目用途"] = td[3].get_text()
+            p["URL"] = website + td[1].find(name='a').get('href')
+            print(p["项目名称"])
+
+            p = spyder_content(p["URL"], p)
+
+            row_0 = [p[key] for key in p if key not in ['批准销售', '可售统计', '已售统计']]
+
+            row_1 = [r1 for r1 in p['批准销售']]
+            row_2 = [r2 for r2 in p['可售统计']]
+            row_3 = [r3 for r3 in p['已售统计']]
+
+            writer.writerow(row_0 + row_1 + row_2 + row_3)
 
 
-            table = html.find(name='table', class_="tablestyles text-center")
-            print(table)
-
-            for tr in table.find_all(name='tr', limit=30, recursive=False):
-                p = {}
-                td = tr.find_all(name='td', limit=4, recursive=False)
-                print('---------------')
-                if td:
-                    # 项目基本信息
-                    p["开发企业"] = td[0].get_text()
-                    p["项目名称"] = td[1].get_text().strip()
-                    p["项目坐落"] = td[2].get_text()
-                    p["项目用途"] = td[3].get_text()
-                    p["URL"] = website + td[1].find(name='a').get('href')
-                    print(p["项目名称"])
-
-                    p = spyder_content(p["URL"], p)
-
-                    row_0 = [p[key] for key in p if key not in ['批准销售', '可售统计', '已售统计']]
-
-                    row_1 = [r1 for r1 in p['批准销售']]
-                    row_2 = [r2 for r2 in p['可售统计']]
-                    row_3 = [r3 for r3 in p['已售统计']]
-
-                    writer.writerow(row_0 + row_1 + row_2 + row_3)
+def getHtmlText(url):
+    try:
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+        r.encoding = r.apparent_encoding
+        return r.text
+    except:
+        return "产生异常"
 
 
 if __name__ == "__main__":
     website = 'http://222.78.94.14'
-    spyder_list(website, 3)
+
+    with open('a.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        for page in range(1, 2):
+            url = website + '/ZL/House/ListProject?pagenumber={}&pagesize=15'.format(str(page))
+            print(url)
+            text = getHtmlText(url)
+            spyder_list(text, website)
